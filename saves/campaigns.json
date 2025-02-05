@@ -1,0 +1,51 @@
+{
+    "Brand New": {
+        "name": "Brand New",
+        "npcs": [
+            {
+                "name": "Jerisbel",
+                "backstory": "",
+                "stats": {
+                    "strength": 0,
+                    "dexterity": 0,
+                    "intelligence": 0,
+                    "charisma": 0
+                }
+            },
+            {
+                "name": "Mariable",
+                "backstory": "",
+                "stats": {
+                    "strength": 15,
+                    "dexterity": 12,
+                    "intelligence": 16,
+                    "charisma": 17
+                }
+            }
+        ],
+        "encounters": [],
+        "maps": [],
+        "players": [
+            {
+                "name": "Thrain",
+                "campaign": "Brand New"
+            },
+            {
+                "name": "Toke",
+                "campaign": "Brand New"
+            }
+        ]
+    },
+    "the chairs": {
+        "name": "the chairs",
+        "npcs": [],
+        "encounters": [],
+        "maps": [],
+        "players": [
+            {
+                "name": "thrain",
+                "campaign": "Brand New"
+            }
+        ]
+    }
+}
