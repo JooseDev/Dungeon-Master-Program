@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QLabel, QPushButton, QFileDialog, QSpinBox, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QLabel, QPushButton, QFileDialog, QSpinBox, QSizePolicy, QSplitter
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QPen
 from PyQt5.QtCore import Qt
 import os
@@ -14,7 +14,7 @@ class MapViewer(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        layout = QHBoxLayout()
+        splitter = QSplitter(Qt.Horizontal)
 
         self.map_list = QListWidget()
         self.map_list.itemClicked.connect(self.display_map)
@@ -23,11 +23,12 @@ class MapViewer(QWidget):
         self.map_display.setAlignment(Qt.AlignCenter)
         self.map_display.setStyleSheet("border: 1px solid black;")
         self.map_display.setScaledContents(True)
-        self.map_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.map_display.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
 
         self.add_map_button = QPushButton('Add Map')
         self.add_map_button.clicked.connect(self.add_map)
 
+        # Grid controls
         self.grid_rows_input = QSpinBox()
         self.grid_rows_input.setRange(1, 50)
         self.grid_rows_input.setValue(self.grid_rows)
@@ -48,10 +49,18 @@ class MapViewer(QWidget):
         left_layout.addWidget(self.grid_cols_input)
         left_layout.addWidget(self.update_grid_button)
 
-        layout.addLayout(left_layout)
-        layout.addWidget(self.map_display, stretch=1)
+        left_widget = QWidget()
+        left_widget.setLayout(left_layout)
+        left_widget.setFixedWidth(200)
 
-        self.setLayout(layout)
+        splitter.addWidget(left_widget)
+        splitter.addWidget(self.map_display)
+        splitter.setStretchFactor(1, 3)
+
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(splitter)
+
+        self.setLayout(main_layout)
         self.load_maps()
 
     def load_data(self, maps):
@@ -76,13 +85,7 @@ class MapViewer(QWidget):
 
     def draw_grid(self):
         if self.current_map is not None:
-            display_size = self.map_display.size()
-            grid_map = self.current_map.scaled(display_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-            # Prevent scaling loop by checking if scaling exceeds display size
-            if grid_map.size().width() > display_size.width() or grid_map.size().height() > display_size.height():
-                grid_map = self.current_map.scaled(display_size.width(), display_size.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
+            grid_map = self.current_map.scaled(self.map_display.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
             painter = QPainter(grid_map)
             pen = QPen(QColor(0, 0, 0), 1, Qt.SolidLine)
             painter.setPen(pen)
@@ -93,10 +96,12 @@ class MapViewer(QWidget):
             cell_width = width / self.grid_cols
             cell_height = height / self.grid_rows
 
+            # Draw vertical lines
             for col in range(1, self.grid_cols):
                 x = int(col * cell_width)
                 painter.drawLine(x, 0, x, height)
 
+            # Draw horizontal lines
             for row in range(1, self.grid_rows):
                 y = int(row * cell_height)
                 painter.drawLine(0, y, width, y)
@@ -107,7 +112,7 @@ class MapViewer(QWidget):
             self.map_display.setText('No map selected.')
 
     def resizeEvent(self, event):
-        self.draw_grid()
+        self.draw_grid()  # Redraw the grid when the window is resized
         super().resizeEvent(event)
 
     def update_grid(self):
