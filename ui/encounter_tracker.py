@@ -1,4 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLineEdit, QSpinBox, QComboBox, QMessageBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QComboBox, QSpinBox, QMessageBox
+import json
+import os
 
 class EncounterTracker(QWidget):
     def __init__(self, main_window):
@@ -8,7 +10,8 @@ class EncounterTracker(QWidget):
         self.encounter_participants = []  # List to hold players and enemies in the encounter
         self.current_turn_index = 0
         self.init_ui()
-
+        self.load_enemy_list()
+        self.update_player_dropdown()
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -18,14 +21,13 @@ class EncounterTracker(QWidget):
 
         # Add enemy section
         add_enemy_layout = QHBoxLayout()
-        self.enemy_name_input = QLineEdit()
-        self.enemy_name_input.setPlaceholderText('Enemy Name')
+        self.enemy_dropdown = QComboBox()
         self.initiative_input = QSpinBox()
         self.initiative_input.setRange(1, 100)
         self.add_enemy_button = QPushButton('Add Enemy')
         self.add_enemy_button.clicked.connect(self.add_enemy)
 
-        add_enemy_layout.addWidget(self.enemy_name_input)
+        add_enemy_layout.addWidget(self.enemy_dropdown)
         add_enemy_layout.addWidget(self.initiative_input)
         add_enemy_layout.addWidget(self.add_enemy_button)
 
@@ -55,36 +57,41 @@ class EncounterTracker(QWidget):
         layout.addWidget(self.next_turn_button)
 
         self.setLayout(layout)
-        self.update_player_dropdown()
+
+    def load_enemy_list(self):
+        save_file = 'saves/enemies.json'
+        if os.path.exists(save_file):
+            with open(save_file, 'r') as file:
+                enemies = json.load(file)
+                for enemy_name in enemies.keys():
+                    self.enemy_dropdown.addItem(enemy_name)
 
     def load_players(self, players):
         self.players = players  # Keep a list of all available players
         self.update_player_dropdown()  # Only update the dropdown, don't add to the encounter
 
-
-
     def load_data(self, encounters):
         self.enemies = encounters
         self.players = []
         self.update_participant_list()
+        self.update_player_dropdown()
 
     def update_player_dropdown(self):
         self.player_dropdown.clear()
-        for player in self.main_window.player_manager.players:
-            self.player_dropdown.addItem(player['name'])
+        if hasattr(self.main_window, 'player_manager'):
+            for player in self.main_window.player_manager.players:
+                self.player_dropdown.addItem(player['name'])
 
     def add_enemy(self):
-        name = self.enemy_name_input.text()
+        enemy_name = self.enemy_dropdown.currentText()
         initiative = self.initiative_input.value()
 
-        if name:
-            enemy = {'name': name, 'initiative': initiative}
+        if enemy_name:
+            enemy = {'name': enemy_name, 'initiative': initiative}
             self.encounter_participants.append(enemy)  # Add to encounter participants
             self.update_participant_list()
-            self.enemy_name_input.clear()
         else:
-            QMessageBox.warning(self, 'Error', 'Enemy name cannot be empty.')
-
+            QMessageBox.warning(self, 'Error', 'No enemy selected.')
 
     def add_player_to_encounter(self):
         player_name = self.player_dropdown.currentText()
@@ -101,33 +108,21 @@ class EncounterTracker(QWidget):
         selected_items = self.participant_list.selectedItems()
         if selected_items:
             index = self.participant_list.row(selected_items[0])
-            if index < len(self.players):
-                del self.players[index]
-            else:
-                del self.enemies[index - len(self.players)]
+            del self.encounter_participants[index]
             self.update_participant_list()
         else:
             QMessageBox.warning(self, 'Error', 'No participant selected to remove.')
 
     def update_participant_list(self):
         self.participant_list.clear()
-
-        # Sort participants by initiative in descending order
         self.encounter_participants.sort(key=lambda x: x['initiative'], reverse=True)
-
         for idx, participant in enumerate(self.encounter_participants):
-            if isinstance(participant, dict) and 'name' in participant and 'initiative' in participant:
-                turn_indicator = ' (Current Turn)' if idx == self.current_turn_index else ''
-                self.participant_list.addItem(f"{participant['name']} (Initiative: {participant['initiative']}){turn_indicator}")
-            else:
-                QMessageBox.warning(self, 'Error', f'Invalid participant data: {participant}')
-
-
+            turn_indicator = ' (Current Turn)' if idx == self.current_turn_index else ''
+            self.participant_list.addItem(f"{participant['name']} (Initiative: {participant['initiative']}){turn_indicator}")
 
     def next_turn(self):
-        combined_list = self.players + self.enemies
-        if combined_list:
-            self.current_turn_index = (self.current_turn_index + 1) % len(combined_list)
+        if self.encounter_participants:
+            self.current_turn_index = (self.current_turn_index + 1) % len(self.encounter_participants)
             self.update_participant_list()
         else:
             QMessageBox.warning(self, 'Error', 'No participants in the encounter.')

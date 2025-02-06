@@ -1,0 +1,6 @@
+
+*.pyc
+*.pyc
+ui/__pycache__/encounter_tracker.cpython-312.pyc
+ui/__pycache__/main_menu.cpython-312.pyc
+ui/__pycache__/map_viewer.cpython-312.pyc

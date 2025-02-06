@@ -1,0 +1,19 @@
+{
+    "Bullywug": {
+        "name": "Bullywug",
+        "stats": {
+            "Strength": 14,
+            "Dexterity": 7,
+            "Constitution": 13,
+            "Intelligence": 12,
+            "Wisdom": 16,
+            "Charisma": 12
+        },
+        "actions": [
+            "Tounge Punch: Deal 1d6 Damage\t"
+        ],
+        "spells": [
+            "Toxic Fart: Deal 1d6 Damage"
+        ]
+    }
+}
